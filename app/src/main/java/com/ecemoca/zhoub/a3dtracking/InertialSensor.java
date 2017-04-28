@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.net.Network;
 import android.util.Log;
 import android.util.StringBuilderPrinter;
 import android.widget.TextView;
@@ -13,10 +14,16 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import static android.R.attr.port;
+import static android.os.Build.VERSION_CODES.N;
 
 /**
  * MapScanner: Indoor Map Construction using Acoustics
@@ -40,15 +47,18 @@ public class InertialSensor extends Thread {
     private float[] mRotationMatrix = null;
     private float[] globalRotationMatrix = null;
     private float[] orientationVals = null;
+    private sendDataOverNetwork networkHandler;
 
     public InertialSensor(Context applicationContext, String path) {
         this.path = path;
         mContext = applicationContext;
         sb = new StringBuilder();
         sbRotate = new StringBuilder();
+        networkHandler = new sendDataOverNetwork("10.6.0.221", 10000);
     }
 
     public void run() {
+        networkHandler.start();
         mSensorManager = (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE);
         if (mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION) != null)
             currentDevice.add(mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION));
@@ -126,7 +136,9 @@ public class InertialSensor extends Thread {
 //                    orientationVals[2] -= initialOrientation[2];
 
                     final String add = timeStamp + "," + orientationVals[0] + "," + orientationVals[1] + "," + orientationVals[2] + "\n";
-                    System.out.println(add);
+                    //System.out.println(add);
+                    networkHandler.pushData(add);
+
 
                     sbRotate.append(add);
                 }
@@ -147,7 +159,59 @@ public class InertialSensor extends Thread {
         if (mSensorManager != null) {
             mSensorManager.unregisterListener(mListener);
         }
-        writeFile();
+        //writeFile();
+    }
+
+    private class sendDataOverNetwork extends Thread{
+        private Socket mSocket;
+        private PrintWriter out;
+        private InetAddress IPADDR;
+        private String ipaddr;
+        private final int PORT;
+        private ArrayList<String> gyroData;
+        private boolean isActive = true;
+
+        public sendDataOverNetwork(String ipaddr, int PORT) {
+            this.ipaddr = ipaddr;
+            this.PORT = PORT;
+            this.gyroData = new ArrayList<String>();
+        }
+
+        public void setActive(boolean active) {
+            isActive = active;
+        }
+
+        @Override
+        public void run() {
+            try{
+
+                IPADDR = InetAddress.getByName(ipaddr);
+                mSocket = new Socket(IPADDR, PORT);
+                out = new PrintWriter(mSocket.getOutputStream(), true);
+                Log.d("SDON", "socket connected on port: " + PORT);
+                //uses arraylist as a stack to store data and will pop the first index if that
+                //index exists and then sends it overt the network
+                while(isActive){
+                    if(gyroData.size() >= 1){
+                        out.println(gyroData.remove(0));
+                    }
+                }
+                out.println("disconnect");
+                mSocket.close();
+                Log.d("SDON", "socket closed");
+                out.close();
+                Log.d("SDON", "PrintWriter closed");
+
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+
+
+        public void pushData(String data){
+            gyroData.add(data);
+        }
+
     }
 
     private void writeFile() {
@@ -173,6 +237,16 @@ public class InertialSensor extends Thread {
             out.close();
         } catch (IOException e) {
             // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public void stopNetwork(){
+        try {
+            networkHandler.setActive(false);
+            sleep(5);
+            networkHandler.join();
+        } catch(InterruptedException e){
             e.printStackTrace();
         }
     }
