@@ -16,13 +16,14 @@ public class MainActivity extends AppCompatActivity {
     private String sourcePath = Environment.getExternalStorageDirectory() + "/3DTracking/chirp.wav";
     private String recordPath = Environment.getExternalStorageDirectory() +  "/3DTracking";
     private String inertialPath = Environment.getExternalStorageDirectory() +  "/3DTracking";
+    private EditText mEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
+        mEditText = (EditText) findViewById(R.id.ip_address);
         final Button buttonPlay = (Button) findViewById(R.id.buttonPlay);
         Log.i("path",sourcePath);
         buttonPlay.setText("START");
@@ -53,9 +54,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (buttonPlay.getText() == "START") {
+                    String ip = mEditText.getText().toString();
                     emitting = new Emitting(sourcePath);
-                    recording = new Recording(/*recordPath*/);
-                    inertial = new InertialSensor(getApplicationContext(), inertialPath);
+                    recording = new Recording(/*recordPath*/ip);
+                    inertial = new InertialSensor(getApplicationContext(), ip, inertialPath);
                     //emitting.start();
                     //recording.start();
                     inertial.start();

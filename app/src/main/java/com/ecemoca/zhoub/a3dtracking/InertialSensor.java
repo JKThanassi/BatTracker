@@ -48,13 +48,16 @@ public class InertialSensor extends Thread {
     private float[] globalRotationMatrix = null;
     private float[] orientationVals = null;
     private sendDataOverNetwork networkHandler;
+    private String ipAddr;
 
-    public InertialSensor(Context applicationContext, String path) {
+    public InertialSensor(Context applicationContext, String ipAddr, String path) {
         this.path = path;
         mContext = applicationContext;
         sb = new StringBuilder();
         sbRotate = new StringBuilder();
-        networkHandler = new sendDataOverNetwork("10.6.0.221", 10000);
+        this.ipAddr = ipAddr;
+        networkHandler = new sendDataOverNetwork(this.ipAddr, 10000);
+
     }
 
     public void run() {

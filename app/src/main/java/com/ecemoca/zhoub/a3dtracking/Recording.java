@@ -33,7 +33,12 @@ public class Recording extends Thread {
     int brSizeInc =  AudioRecord.getMinBufferSize(sRate, AudioFormat.CHANNEL_IN_STEREO,
             AudioFormat.ENCODING_PCM_16BIT);
 
-    public static final int PORT = 5544;
+    public static final int PORT = 5555;
+    private String ipAddr;
+
+    public Recording(String ipAddr){
+        this.ipAddr = ipAddr;
+    }
 
 
 
@@ -49,7 +54,7 @@ public class Recording extends Thread {
             Log.d("VS","Buffer created of size " + brSizeInc);
             DatagramPacket packet;
 
-            final InetAddress destination = InetAddress.getByName("10.6.0.221");
+            final InetAddress destination = InetAddress.getByName(ipAddr);
             Log.d("VS", "Address retrieved");
             //for debug purposes
             DatagramPacket packet1 = new DatagramPacket(new byte[7104], 7104, destination,PORT);
@@ -59,7 +64,16 @@ public class Recording extends Thread {
             int source = MediaRecorder.AudioSource.MIC;
 
             // Stereo recording
-            audioRecord = new AudioRecord(source,sRate, AudioFormat.CHANNEL_IN_STEREO,android.media.AudioFormat.ENCODING_PCM_16BIT,brSizeInc);//2*brSizeInc?
+            audioRecord = new AudioRecord.Builder()
+                    .setAudioSource(source)
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(sRate)
+                            .setChannelIndexMask(AudioFormat.CHANNEL_IN_STEREO)
+                            .build())
+                    .setBufferSizeInBytes(brSizeInc)
+                    .build();
+            //audioRecord = new AudioRecord(source,sRate, AudioFormat.CHANNEL_IN_STEREO,android.media.AudioFormat.ENCODING_PCM_16BIT,brSizeInc);//2*brSizeInc?
             Log.d("VS", "Recorder initialized");
             try {
                 Thread.sleep(200);

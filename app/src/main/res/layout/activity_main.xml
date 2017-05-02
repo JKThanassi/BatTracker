@@ -95,15 +95,25 @@
         android:layout_alignLeft="@+id/editTextF0"
         android:layout_alignStart="@+id/editTextF0" />
 
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ip_address"
+        android:text="10.6.0.235"
+        android:ems="10"
+        android:layout_below="@id/editTextN"
+        android:layout_alignLeft="@id/editTextN"
+        />
+
     <Button
         android:text="Emit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/buttonEmit"
-        android:layout_below="@+id/editTextN"
-        android:layout_toRightOf="@+id/textView3"
-        android:layout_alignRight="@+id/textView"
-        android:layout_alignEnd="@+id/textView" />
+        android:layout_below="@id/ip_address"
+        android:layout_toRightOf="@id/textView3"
+        android:layout_alignRight="@id/textView"
+        android:layout_alignEnd="@id/textView" />
 
     <Button
         android:text="Chirp"
